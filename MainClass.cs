@@ -146,7 +146,7 @@ namespace ThermoRawFileParser
                     {
                         outPutFormatInt = int.Parse(outputFormatString);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         throw new OptionException(
                             "unknown output format value (0 for MGF, 1 for mzMl, 2 for indexed mzML, 3 for Parquet)",
@@ -173,7 +173,7 @@ namespace ThermoRawFileParser
                     {
                         metadataInt = int.Parse(outputMetadataString);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         throw new OptionException("unknown metadata format value (0 for JSON, 1 for TXT)",
                             "-m, --metadata");
@@ -217,7 +217,7 @@ namespace ThermoRawFileParser
                 ShowHelp("Error - usage is (use -option=value for the optional arguments):", optionException,
                     optionSet);
             }
-            catch (ArgumentNullException argumentNullException)
+            catch (ArgumentNullException)
             {
                 if (help)
                 {

@@ -1286,7 +1286,7 @@ namespace ThermoRawFileParser.Writer
 
                 precursorMz = reaction.PrecursorMass;
             }
-            catch (ArgumentOutOfRangeException exception)
+            catch (ArgumentOutOfRangeException)
             {
                 //do nothing
             }
