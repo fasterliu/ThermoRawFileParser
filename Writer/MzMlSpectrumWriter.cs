@@ -1013,7 +1013,7 @@ namespace ThermoRawFileParser.Writer
                 precursorMass = reaction.PrecursorMass;
                 isolationWidth = reaction.IsolationWidth;
             }
-            catch (ArgumentOutOfRangeException exception)
+            catch (ArgumentOutOfRangeException)
             {
                 //do nothing
             }
@@ -1169,7 +1169,7 @@ namespace ThermoRawFileParser.Writer
             var scanType = new ScanType
             {
                 instrumentConfigurationRef = instrumentConfigurationRef,
-                cvParam = new CVParamType[2]
+                cvParam = new CVParamType[3]
             };
 
             scanType.cvParam[0] = new CVParamType
@@ -1191,7 +1191,29 @@ namespace ThermoRawFileParser.Writer
                 cvRef = "MS"
             };
 
-            if (monoisotopicMass.HasValue)
+            // Ion Injection Time
+            var trailerLabels = _rawFile.GetTrailerExtraInformation(scanNumber);
+            var ionInjectionTime = 0.0;
+            for (int i = 0; i < trailerLabels.Length; i++)
+            {
+                if (trailerLabels.Labels[i] == "Ion Injection Time (ms):")
+                {
+                    ionInjectionTime = (float)_rawFile.GetTrailerExtraValue(scanNumber, i);
+                    break;
+                }
+            }
+            scanType.cvParam[2] = new CVParamType
+            {
+                name = "ion injection time",
+                cvRef = "MS",
+                accession = "MS:1000927",
+                value = ionInjectionTime.ToString(),
+                unitCvRef = "UO",
+                unitAccession = "UO:0000028",
+                unitName = "millisecond"
+            };
+
+            if (monoisotopicMass.HasValue && monoisotopicMass > 0)
             {
                 scanType.userParam = new UserParamType[1];
                 scanType.userParam[0] = new UserParamType

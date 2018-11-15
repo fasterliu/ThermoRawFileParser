@@ -58,6 +58,7 @@ namespace ThermoRawFileParser.Writer
         /// <param name="scanNumber">the spectrum scan number</param>
         protected string ConstructSpectrumTitle(int scanNumber)
         {
+            /*
             var spectrumTitle = new StringBuilder("mzspec=");
 
             if (!ParseInput.Collection.IsNullOrEmpty())
@@ -78,10 +79,12 @@ namespace ThermoRawFileParser.Writer
             {
                 spectrumTitle.Append(ParseInput.RawFileName).Append(":");
             }
+            */
 
             // Use a fixed controller type and number
             // because only MS detector data is considered for the moment
-            spectrumTitle.Append(" controllerType=0 controllerNumber=1 scan=");
+            var spectrumTitle = new StringBuilder();
+            spectrumTitle.Append("controllerType=0 controllerNumber=1 scan=");
             spectrumTitle.Append(scanNumber);
 
             return spectrumTitle.ToString();
