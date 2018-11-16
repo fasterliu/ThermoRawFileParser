@@ -741,13 +741,16 @@ namespace ThermoRawFileParser.Writer
                 cvRef = "MS"
             });
 
+            int msLevel = (int)scanFilter.MSOrder;
             double? basePeakMass = null;
             double? basePeakIntensity = null;
             double? lowestObservedMz = null;
             double? highestObservedMz = null;
             double[] masses = null;
             double[] intensities = null;
-            if (scan.HasCentroidStream)
+            if (scan.HasCentroidStream &&
+                ((msLevel == 1 && this.ParseInput.Ms1SpectrumMode == SpectrumMode.CENTROID) ||
+                 (msLevel > 1 && this.ParseInput.MsnSpectrumMode == SpectrumMode.CENTROID)))
             {
                 var centroidStream = _rawFile.GetCentroidStream(scanNumber, false);
                 if (scan.CentroidScan.Length > 0)
