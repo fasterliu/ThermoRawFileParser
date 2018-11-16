@@ -16,4 +16,9 @@
         PARQUET,
         NONE
     }
+
+    public enum SpectrumMode
+    {
+        PROFILE, CENTROID
+    }
 }

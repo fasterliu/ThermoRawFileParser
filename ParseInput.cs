@@ -45,6 +45,16 @@ namespace ThermoRawFileParser
         /// </summary>
         public string RawFileNameWithoutExtension { get; }
 
+        /// <summary>
+        /// MS1 spectra peaks data mode.
+        /// </summary>
+        public SpectrumMode Ms1SpectrumMode { get; }
+
+        /// <summary>
+        /// MSn spectra peaks data mode.
+        /// </summary>
+        public SpectrumMode MsnSpectrumMode { get; }
+
         private S3Loader S3Loader { get; set; }
 
         private string S3AccessKeyId { get; }
@@ -89,7 +99,7 @@ namespace ThermoRawFileParser
 
         public ParseInput(string rawFilePath, string outputDirectory, string outputFile, OutputFormat outputFormat,
             bool gzip,
-            MetadataFormat outputMetadata, string s3url, string s3AccessKeyId,
+            MetadataFormat outputMetadata, SpectrumMode ms1SpectrumMode, SpectrumMode msnSpectrumMode, string s3url, string s3AccessKeyId,
             string s3SecretAccessKey, string bucketName,
             bool ignoreInstrumentErrors, bool noPeakPicking, bool noZlibCompression, bool verbose
         )
@@ -101,6 +111,8 @@ namespace ThermoRawFileParser
             OutputDirectory = outputDirectory;
             OutputFile = outputFile;
             OutputFormat = outputFormat;
+            Ms1SpectrumMode = ms1SpectrumMode;
+            MsnSpectrumMode = msnSpectrumMode;
             Gzip = gzip;
             OutputMetadata = outputMetadata;
             S3url = s3url;

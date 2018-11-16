@@ -35,6 +35,11 @@ namespace ThermoRawFileParser
             var help = false;
             var version = false;
 
+            string ms1SpectrumModeString = null;
+            var ms1SpectrumMode = SpectrumMode.CENTROID;
+            string msnSpectrumModeString = null;
+            var msnSpectrumMode = SpectrumMode.CENTROID;
+
             var optionSet = new OptionSet
             {
                 {
@@ -79,6 +84,14 @@ namespace ThermoRawFileParser
                     "z|noZlibCompression",
                     "Don't use zlib compression for the m/z ratios and intensities (by default zlib compression is enabled).",
                     v => noZlibCompression = v != null
+                },
+                {
+                    "1=|ms1mode=", "The MS1 spectra peaks data mode (0 for Profile, 1 for Centroid)",
+                    v => ms1SpectrumModeString = v
+                },
+                {
+                    "x=|msnmode=", "The MS/MS spectra peaks data mode (0 for Profile, 1 for Centroid)",
+                    v => msnSpectrumModeString = v
                 },
                 {
                     "v|verbose", "Enable verbose logging.",
@@ -191,6 +204,44 @@ namespace ThermoRawFileParser
                     }
                 }
 
+                if (ms1SpectrumModeString != null)
+                {
+                    int spectrumModeInt;
+                    try
+                    {
+                        spectrumModeInt = int.Parse(ms1SpectrumModeString);
+                    }
+                    catch (FormatException)
+                    {
+                        throw new OptionException("unknown MS1 spectra mode value (0 for Profile, 1 for Centroid)",
+                            "-1, --ms1mode");
+                    }
+
+                    if (Enum.IsDefined(typeof(SpectrumMode), spectrumModeInt))
+                    {
+                        ms1SpectrumMode = (SpectrumMode) spectrumModeInt;
+                    }
+                }
+
+                if (msnSpectrumModeString != null)
+                {
+                    int spectrumModeInt;
+                    try
+                    {
+                        spectrumModeInt = int.Parse(msnSpectrumModeString);
+                    }
+                    catch (FormatException)
+                    {
+                        throw new OptionException("unknown MSn spectra mode value (0 for Profile, 1 for Centroid)",
+                            "-n, --msnmode");
+                    }
+
+                    if (Enum.IsDefined(typeof(SpectrumMode), spectrumModeInt))
+                    {
+                        msnSpectrumMode = (SpectrumMode)spectrumModeInt;
+                    }
+                }
+
                 if (outputFile == null && outputDirectory == null)
                 {
                     throw new OptionException(
@@ -242,7 +293,7 @@ namespace ThermoRawFileParser
                 }
 
                 var parseInput = new ParseInput(rawFilePath, outputDirectory, outputFile, outputFormat, gzip,
-                    outputMetadataFormat,
+                    outputMetadataFormat, ms1SpectrumMode, msnSpectrumMode,
                     s3url, s3AccessKeyId, s3SecretAccessKey, bucketName, ignoreInstrumentErrors, noPeakPicking,
                     noZlibCompression ,verbose);
                 RawFileParser.Parse(parseInput);

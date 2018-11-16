@@ -972,6 +972,7 @@ namespace ThermoRawFileParser.Writer
                 cvRef = "MS"
             });
 
+            int msLevel = (int)scanFilter.MSOrder;
             double? basePeakMass = null;
             double? basePeakIntensity = null;
             double? lowestObservedMz = null;
