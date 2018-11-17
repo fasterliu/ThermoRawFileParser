@@ -31,6 +31,7 @@ namespace ThermoRawFileParser
             }
 
             Log.Info("Started parsing " + parseInput.RawFilePath);
+            Log.Info("Preferred data mode: MS1 = " + parseInput.Ms1SpectrumMode + ", MSn = " + parseInput.MsnSpectrumMode);
 
             // Create the IRawDataPlus object for accessing the RAW file
             IRawDataPlus rawFile;

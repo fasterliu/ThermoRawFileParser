@@ -3,4 +3,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <StartArguments>-i=C:\Users\Iman\Desktop\RawFiles\FileReaderTest\blacktea_1.raw -f=2 -o .\</StartArguments>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
+    <StartAction>Project</StartAction>
+    <StartArguments>--ms1mode 1 --msnmode 1 -f 1 -o . -i R632_LysC.raw</StartArguments>
+    <StartWorkingDirectory>..\..\..\..\DropboxInc\antibodywork\workspace-R632</StartWorkingDirectory>
+  </PropertyGroup>
 </Project>

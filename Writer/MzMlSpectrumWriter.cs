@@ -1401,16 +1401,33 @@ namespace ThermoRawFileParser.Writer
 
                 if (!OntologyMapping.DissociationTypes.TryGetValue(reaction.ActivationType, out var activation))
                 {
-                    activation = new CVParamType
-                    {
-                        accession = "MS:1000044",
-                        name = "Activation Method",
-                        cvRef = "MS",
-                        value = ""
-                    };
+                    activationCvParams.Add(
+                        new CVParamType
+                        {
+                            accession = "MS:1000045",
+                            name = "collision energy",
+                            cvRef = "MS",
+                            value = reaction.CollisionEnergy.ToString(CultureInfo.InvariantCulture),
+                            unitCvRef = "UO",
+                            unitAccession = "UO:0000266",
+                            unitName = "electronvolt"
+                        });
                 }
 
-                activationCvParams.Add(activation);
+                if (reaction != null)
+                {
+                    if (!OntologyMapping.DissociationTypes.TryGetValue(reaction.ActivationType, out var activation))
+                    {
+                        activation = new CVParamType
+                        {
+                            accession = "MS:1000044",
+                            name = "Activation Method",
+                            cvRef = "MS",
+                            value = ""
+                        };
+                    }
+                    activationCvParams.Add(activation);
+                }
             }
 
             // Check for supplemental activation
