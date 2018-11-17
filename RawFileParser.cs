@@ -31,6 +31,7 @@ namespace ThermoRawFileParser
             }
 
             Log.Info("Started parsing " + parseInput.RawFilePath);
+            Log.Info("Preferred data mode: MS1 = " + parseInput.Ms1SpectrumMode + ", MSn = " + parseInput.MsnSpectrumMode);
 
             // Create the IRawDataPlus object for accessing the RAW file
             //var rawFile = RawFileReaderAdapter.FileFactory(rawFilePath);
@@ -61,6 +62,8 @@ namespace ThermoRawFileParser
                 // Get the first and last scan from the RAW file
                 var firstScanNumber = rawFile.RunHeaderEx.FirstSpectrum;
                 var lastScanNumber = rawFile.RunHeaderEx.LastSpectrum;
+
+                Log.Info("Scan number form " + firstScanNumber.ToString() + " to " + lastScanNumber.ToString());
 
                 if (parseInput.OutputMetadata != MetadataFormat.NON)
                 {
