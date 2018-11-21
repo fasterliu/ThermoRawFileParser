@@ -58,6 +58,9 @@ namespace ThermoRawFileParser
                 // selected instrument to the MS instrument, first instance of it
                 rawFile.SelectInstrument(Device.MS, 1);
 
+                // Show RAW data info
+                showRawDataInfo(rawFile);
+
                 // Get the first and last scan from the RAW file
                 var firstScanNumber = rawFile.RunHeaderEx.FirstSpectrum;
                 var lastScanNumber = rawFile.RunHeaderEx.LastSpectrum;
@@ -78,6 +81,7 @@ namespace ThermoRawFileParser
 
                 if (parseInput.OutputFormat != OutputFormat.NONE)
                 {
+                    Log.Info("Convert spectra data.");
                     SpectrumWriter spectrumWriter;
                     switch (parseInput.OutputFormat)
                     {
@@ -99,6 +103,23 @@ namespace ThermoRawFileParser
                 
                 Log.Info("Finished parsing " + parseInput.RawFilePath);
             }
+        }
+
+        /// <summary>
+        /// Show some information in the RAW data.
+        /// </summary>
+        /// <param name="rawFile">the raw file reader object</param>
+        private static void showRawDataInfo(IRawDataPlus rawFile)
+        {
+            Log.Info("RAW file info:");
+            Log.Info("  * Path             : " + rawFile.FileName);
+            Log.Info("  * Raw File Version : " + rawFile.FileHeader.Revision);
+            Log.Info("  * Create Time      : " + rawFile.FileHeader.CreationDate);
+            Log.Info("  * Instrument       : " + rawFile.GetInstrumentData().Name);
+            Log.Info("  * Serial Number    : " + rawFile.GetInstrumentData().SerialNumber);
+            Log.Info("  * Samlpe Vial      : " + rawFile.SampleInformation.Vial);
+            Log.Info("  * Time Range       : " + $"{rawFile.RunHeaderEx.StartTime:F2} - {rawFile.RunHeaderEx.EndTime:F2}");
+            Log.Info("  * Scan Number      : " + $"{rawFile.RunHeaderEx.FirstSpectrum} - {rawFile.RunHeaderEx.LastSpectrum}");
         }
     }
 }
