@@ -35,6 +35,16 @@ namespace ThermoRawFileParser
         public bool ExcludeProfileData { get; }
 
         /// <summary>
+        /// MS1 spectra peaks data mode.
+        /// </summary>
+        public SpectrumMode Ms1SpectrumMode { get; }
+
+        /// <summary>
+        /// MSn spectra peaks data mode.
+        /// </summary>
+        public SpectrumMode MsnSpectrumMode { get; }
+
+        /// <summary>
         /// The data collection identifier.
         /// </summary>  
         public string Collection { get; }
@@ -61,7 +71,8 @@ namespace ThermoRawFileParser
         public string RawFileNameWithoutExtension { get; }
 
         public ParseInput(string rawFilePath, string outputDirectory, OutputFormat outputFormat, bool gzip,
-            MetadataFormat outputMetadata, bool excludeProfileData, string collection, string msRun, string subFolder)
+                          MetadataFormat outputMetadata, SpectrumMode ms1SpectrumMode, SpectrumMode msnSpectrumMode,
+                          bool excludeProfileData, string collection, string msRun, string subFolder)
         {
             RawFilePath = rawFilePath;
             var splittedPath = RawFilePath.Split('/');
@@ -69,6 +80,8 @@ namespace ThermoRawFileParser
             RawFileNameWithoutExtension = Path.GetFileNameWithoutExtension(RawFileName);
             OutputDirectory = outputDirectory;
             OutputFormat = outputFormat;
+            Ms1SpectrumMode = ms1SpectrumMode;
+            MsnSpectrumMode = msnSpectrumMode;
             Gzip = gzip;
             OutputMetadata = outputMetadata;
             ExcludeProfileData = excludeProfileData;

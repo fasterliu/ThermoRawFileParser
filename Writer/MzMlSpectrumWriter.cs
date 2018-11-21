@@ -23,7 +23,7 @@ namespace ThermoRawFileParser.Writer
 
         private IRawDataPlus _rawFile;
 
-        // Dictionary to keep track of the different mass analyzers (key: Thermo MassAnalyzerType; value: the reference string)       
+        // Dictionary to keep track of the different mass analyzers (key: Thermo MassAnalyzerType; value: the reference string)
         private readonly Dictionary<MassAnalyzerType, string> _massAnalyzers =
             new Dictionary<MassAnalyzerType, string>();
 
@@ -105,7 +105,7 @@ namespace ThermoRawFileParser.Writer
                 id = ParseInput.RawFileNameWithoutExtension
             };
 
-            // Add the controlled vocabularies     
+            // Add the controlled vocabularies
             var cvs = new List<CVType>
             {
                 new CVType
@@ -207,7 +207,7 @@ namespace ThermoRawFileParser.Writer
                 cvParam = sourceFileCvParams.ToArray()
             };
 
-            // Software            
+            // Software
             mzMl.softwareList = new SoftwareListType
             {
                 count = "1",
@@ -352,7 +352,7 @@ namespace ThermoRawFileParser.Writer
                         detector = new DetectorComponentType[1]
                     };
 
-                // Instrument source                                
+                // Instrument source
                 if (_ionizationTypes.IsNullOrEmpty())
                 {
                     _ionizationTypes.Add(IonizationModeType.Any,
@@ -376,8 +376,8 @@ namespace ThermoRawFileParser.Writer
                     index++;
                 }
 
-                // Instrument analyzer             
-                // Mass analyzer type                    
+                // Instrument analyzer
+                // Mass analyzer type
                 instrumentConfigurationList.instrumentConfiguration[massAnalyzerIndex].componentList.analyzer[0] =
                     new AnalyzerComponentType
                     {
@@ -389,7 +389,7 @@ namespace ThermoRawFileParser.Writer
                     OntologyMapping.MassAnalyzerTypes[massAnalyzer.Key];
                 index++;
 
-                // Instrument detector                
+                // Instrument detector
                 instrumentConfigurationList.instrumentConfiguration[massAnalyzerIndex].componentList.detector[0] =
                     new DetectorComponentType
                     {
@@ -430,7 +430,7 @@ namespace ThermoRawFileParser.Writer
             // Define the settings for getting the Base Peak chromatogram
             var settings = new ChromatogramTraceSettings(TraceType.BasePeak);
 
-            // Get the chromatogram from the RAW file. 
+            // Get the chromatogram from the RAW file.
             var data = _rawFile.GetChromatogramData(new IChromatogramSettings[] {settings}, firstScanNumber,
                 lastScanNumber);
 
@@ -511,7 +511,7 @@ namespace ThermoRawFileParser.Writer
                         binaryData.Add(timesBinaryData);
                     }
 
-                    // Chromatogram intensities                    
+                    // Chromatogram intensities
                     if (!trace[i].Times.IsNullOrEmpty())
                     {
                         // Set the spectrum default array length if necessary
@@ -711,7 +711,7 @@ namespace ThermoRawFileParser.Writer
                     throw new ArgumentOutOfRangeException();
             }
 
-            // Scan polarity            
+            // Scan polarity
             var polarityType = scanFilter.Polarity;
             switch (polarityType)
             {
@@ -748,13 +748,16 @@ namespace ThermoRawFileParser.Writer
                 cvRef = "MS"
             });
 
+            int msLevel = (int)scanFilter.MSOrder;
             double? basePeakMass = null;
             double? basePeakIntensity = null;
             double? lowestObservedMz = null;
             double? highestObservedMz = null;
             double[] masses = null;
             double[] intensities = null;
-            if (scan.HasCentroidStream)
+            if (scan.HasCentroidStream &&
+                ((msLevel == 1 && this.ParseInput.Ms1SpectrumMode == SpectrumMode.CENTROID) ||
+                 (msLevel > 1 && this.ParseInput.MsnSpectrumMode == SpectrumMode.CENTROID)))
             {
                 var centroidStream = _rawFile.GetCentroidStream(scanNumber, false);
                 if (scan.CentroidScan.Length > 0)
@@ -1020,7 +1023,7 @@ namespace ThermoRawFileParser.Writer
                 precursorMass = reaction.PrecursorMass;
                 isolationWidth = reaction.IsolationWidth;
             }
-            catch (ArgumentOutOfRangeException exception)
+            catch (ArgumentOutOfRangeException)
             {
                 //do nothing
             }

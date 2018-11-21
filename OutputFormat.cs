@@ -9,4 +9,9 @@
     {
         JSON, TXT , PARQUET, NON 
     }
+
+    public enum SpectrumMode
+    {
+        PROFILE, CENTROID
+    }
 }

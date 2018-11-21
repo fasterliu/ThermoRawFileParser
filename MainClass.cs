@@ -22,6 +22,10 @@ namespace ThermoRawFileParser
             string collection = null;
             string msRun = null;
             string subFolder = null;
+            string ms1SpectrumModeString = null;
+            var ms1SpectrumMode = SpectrumMode.CENTROID;
+            string msnSpectrumModeString = null;
+            var msnSpectrumMode = SpectrumMode.CENTROID;
             var help = false;
 
             var optionSet = new OptionSet
@@ -54,6 +58,14 @@ namespace ThermoRawFileParser
                     "p|profiledata",
                     "Exclude MS2 profile data if this flag is specified (without value). Only for MGF format!",
                     v => includeProfileData = v != null
+                },
+                {
+                    "1=|ms1mode=", "The MS1 spectra peaks data mode (0 for Profile, 1 for Centroid)",
+                    v => ms1SpectrumModeString = v
+                },
+                {
+                    "n=|msnmode=", "The MS/MS spectra peaks data mode (0 for Profile, 1 for Centroid)",
+                    v => msnSpectrumModeString = v
                 },
                 {
                     "c:|collection", "The optional collection identifier (PXD identifier for example).",
@@ -101,7 +113,7 @@ namespace ThermoRawFileParser
                     {
                         outPutFormatInt = int.Parse(outputFormatString);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         throw new OptionException("unknown output format value (0 for MGF, 1 for MzMl, 2 for Parquet)",
                             "-f, --format");
@@ -126,7 +138,7 @@ namespace ThermoRawFileParser
                     {
                         metadataInt = int.Parse(outputMetadataString);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         throw new OptionException("unknown metadata format value (0 for JSON, 1 for TXT)",
                             "-m, --metadata");
@@ -143,13 +155,51 @@ namespace ThermoRawFileParser
                             "-m, --metadata");
                     }
                 }
+
+                if (ms1SpectrumModeString != null)
+                {
+                    int spectrumModeInt;
+                    try
+                    {
+                        spectrumModeInt = int.Parse(ms1SpectrumModeString);
+                    }
+                    catch (FormatException)
+                    {
+                        throw new OptionException("unknown MS1 spectra mode value (0 for Profile, 1 for Centroid)",
+                            "-1, --ms1mode");
+                    }
+
+                    if (Enum.IsDefined(typeof(SpectrumMode), spectrumModeInt))
+                    {
+                        ms1SpectrumMode = (SpectrumMode) spectrumModeInt;
+                    }
+                }
+
+                if (msnSpectrumModeString != null)
+                {
+                    int spectrumModeInt;
+                    try
+                    {
+                        spectrumModeInt = int.Parse(msnSpectrumModeString);
+                    }
+                    catch (FormatException)
+                    {
+                        throw new OptionException("unknown MSn spectra mode value (0 for Profile, 1 for Centroid)",
+                            "-n, --msnmode");
+                    }
+
+                    if (Enum.IsDefined(typeof(SpectrumMode), spectrumModeInt))
+                    {
+                        msnSpectrumMode = (SpectrumMode)spectrumModeInt;
+                    }
+                }
             }
             catch (OptionException optionException)
             {
                 ShowHelp("Error - usage is (use -option=value for the optional arguments):", optionException,
                     optionSet);
             }
-            catch (ArgumentNullException argumentNullException)
+            catch (ArgumentNullException)
             {
                 if (help)
                 {
@@ -166,8 +216,8 @@ namespace ThermoRawFileParser
             try
             {
                 var parseInput = new ParseInput(rawFilePath, outputDirectory, outputFormat, gzip,
-                    outputMetadataFormat,
-                    includeProfileData, collection, msRun, subFolder);
+                                                outputMetadataFormat, ms1SpectrumMode, msnSpectrumMode,
+                                                includeProfileData, collection, msRun, subFolder);
                 RawFileParser.Parse(parseInput);
             }
             catch (Exception ex)
