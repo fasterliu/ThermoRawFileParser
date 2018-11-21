@@ -52,7 +52,7 @@ namespace ThermoRawFileParser.Writer
                                 var precursorMass = reaction.PrecursorMass;
                                 Writer.WriteLine($"PEPMASS={precursorMass:F7}");
                             }
-                            catch (ArgumentOutOfRangeException exception)
+                            catch (ArgumentOutOfRangeException)
                             {
                                 Log.Warn("No reaction found for scan " + scanNumber);
                             }
