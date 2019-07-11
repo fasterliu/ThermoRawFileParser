@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Globalization;
+using System.Reflection;
+using log4net;
 using ThermoFisher.CommonCore.Data.Business;
 using ThermoFisher.CommonCore.Data.FilterEnums;
 using ThermoFisher.CommonCore.Data.Interfaces;
@@ -7,8 +10,14 @@ namespace ThermoRawFileParser.Writer
 {
     public class MgfSpectrumWriter : SpectrumWriter
     {
-        private static readonly log4net.ILog Log =
-            log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog Log =
+            LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
+        private const string PositivePolarity = "+";
+        private const string NegativePolarity = "-";
+
+        // Precursor scan number for reference in the precursor element of an MS2 spectrum
+        private int _precursorScanNumber;
 
         public MgfSpectrumWriter(ParseInput parseInput) : base(parseInput)
         {
@@ -20,8 +29,24 @@ namespace ThermoRawFileParser.Writer
             ConfigureWriter(".mgf");
             using (Writer)
             {
+                Log.Info("Processing " + (lastScanNumber - firstScanNumber + 1) + " scans");
+
+                var lastScanProgress = 0;
                 for (var scanNumber = firstScanNumber; scanNumber <= lastScanNumber; scanNumber++)
                 {
+                    if (!ParseInput.Verbose)
+                    {
+                        var scanProgress = (int) ((double) scanNumber / (lastScanNumber - firstScanNumber + 1) * 100);
+                        if (scanProgress % ProgressPercentageStep == 0)
+                        {
+                            if (scanProgress != lastScanProgress)
+                            {
+                                Console.Write("" + scanProgress + "% ");
+                                lastScanProgress = scanProgress;
+                            }
+                        }
+                    }
+
                     // Get each scan from the RAW file
                     var scan = Scan.FromFile(rawFile, scanNumber);
 
@@ -35,43 +60,101 @@ namespace ThermoRawFileParser.Writer
                     // Get the scan event for this scan number
                     var scanEvent = rawFile.GetScanEventForScanNumber(scanNumber);
 
-                    // Only consider MS2 spectra
-                    if (scanFilter.MSOrder == MSOrderType.Ms2)
+                    IReaction reaction = null;
+                    switch (scanFilter.MSOrder)
                     {
-                        if (scanEvent.ScanData == ScanDataType.Centroid ||
-                            (scanEvent.ScanData == ScanDataType.Profile && (scan.HasCentroidStream || !ParseInput.ExcludeProfileData)))
-                        {
-                            Writer.WriteLine("BEGIN IONS");
-                            Writer.WriteLine($"TITLE={ConstructSpectrumTitle(scanNumber)}");
-                            Writer.WriteLine($"SCAN={scanNumber}");
-                            Writer.WriteLine($"RTINSECONDS={time * 60}");
-                            // Get the reaction information for the first precursor
+                        case MSOrderType.Ms:
+                            // Keep track of scan number for precursor reference
+                            _precursorScanNumber = scanNumber;
+                            break;
+                        case MSOrderType.Ms2:
                             try
                             {
-                                var reaction = scanEvent.GetReaction(0);
-                                var precursorMass = reaction.PrecursorMass;
-                                Writer.WriteLine($"PEPMASS={precursorMass:F7}");
+                                reaction = scanEvent.GetReaction(0);
+                            }
+                            catch (ArgumentOutOfRangeException exception)
+                            {
+                                Log.Warn("No reaction found for scan " + scanNumber);
+                            }
+
+                            goto default;
+                        case MSOrderType.Ms3:
+                        {
+                            try
+                            {
+                                reaction = scanEvent.GetReaction(1);
                             }
                             catch (ArgumentOutOfRangeException)
                             {
                                 Log.Warn("No reaction found for scan " + scanNumber);
                             }
 
+                            goto default;
+                        }
+                        default:
+                            Writer.WriteLine("BEGIN IONS");
+                            Writer.WriteLine($"TITLE={ConstructSpectrumTitle(scanNumber)}");
+                            Writer.WriteLine($"SCANS={scanNumber}");
+                            Writer.WriteLine(
+                                $"RTINSECONDS={(time * 60).ToString(CultureInfo.InvariantCulture)}");
+
                             // trailer extra data list
                             var trailerData = rawFile.GetTrailerExtraInformation(scanNumber);
+                            int? charge = null;
+                            double? monoisotopicMz = null;
+                            double? isolationWidth = null;
                             for (var i = 0; i < trailerData.Length; i++)
                             {
                                 if (trailerData.Labels[i] == "Charge State:")
                                 {
                                     if (Convert.ToInt32(trailerData.Values[i]) > 0)
                                     {
-                                        Writer.WriteLine($"CHARGE={trailerData.Values[i]}+");
+                                        charge = Convert.ToInt32(trailerData.Values[i]);
                                     }
+                                }
+
+                                if (trailerData.Labels[i] == "Monoisotopic M/Z:")
+                                {
+                                    monoisotopicMz = double.Parse(trailerData.Values[i], NumberStyles.Any,
+                                        CultureInfo.CurrentCulture);
+                                }
+
+                                if (trailerData.Labels[i] == "MS" + (int) scanFilter.MSOrder + " Isolation Width:")
+                                {
+                                    isolationWidth = double.Parse(trailerData.Values[i], NumberStyles.Any,
+                                        CultureInfo.CurrentCulture);
                                 }
                             }
 
+                            if (reaction != null)
+                            {
+                                var selectedIonMz =
+                                    CalculateSelectedIonMz(reaction, monoisotopicMz, isolationWidth);
+
+                                Writer.WriteLine("PEPMASS=" +
+                                                 selectedIonMz.ToString(CultureInfo.InvariantCulture));
+                            }
+
+                            // charge
+                            if (charge != null)
+                            {
+                                // Scan polarity            
+                                var polarity = PositivePolarity;
+                                if (scanFilter.Polarity == PolarityType.Negative)
+                                {
+                                    polarity = NegativePolarity;
+                                }
+
+                                Writer.WriteLine($"CHARGE={charge}{polarity}");
+                            }
+
+                            // write the filter string
+                            //Writer.WriteLine($"SCANEVENT={scanEvent.ToString()}");
+
                             // Check if the scan has a centroid stream
-                            if (scan.HasCentroidStream)
+                            if (scan.HasCentroidStream && (scanEvent.ScanData == ScanDataType.Centroid ||
+                                                           (scanEvent.ScanData == ScanDataType.Profile &&
+                                                            !ParseInput.NoPeakPicking)))
                             {
                                 var centroidStream = rawFile.GetCentroidStream(scanNumber, false);
                                 if (scan.CentroidScan.Length > 0)
@@ -79,7 +162,11 @@ namespace ThermoRawFileParser.Writer
                                     for (var i = 0; i < centroidStream.Length; i++)
                                     {
                                         Writer.WriteLine(
-                                            $"{centroidStream.Masses[i]:F7} {centroidStream.Intensities[i]:F10}");
+                                            centroidStream.Masses[i].ToString("0.0000000",
+                                                CultureInfo.InvariantCulture)
+                                            + " "
+                                            + centroidStream.Intensities[i].ToString("0.0000000000",
+                                                CultureInfo.InvariantCulture));
                                     }
                                 }
                             }
@@ -90,17 +177,30 @@ namespace ThermoRawFileParser.Writer
                                 var scanStatistics = rawFile.GetScanStatsForScanNumber(scanNumber);
 
                                 // Get the segmented (low res and profile) scan data
-                                var segmentedScan = rawFile.GetSegmentedScanFromScanNumber(scanNumber, scanStatistics);
+                                var segmentedScan =
+                                    rawFile.GetSegmentedScanFromScanNumber(scanNumber, scanStatistics);
                                 for (var i = 0; i < segmentedScan.Positions.Length; i++)
                                 {
                                     Writer.WriteLine(
-                                        $"{segmentedScan.Positions[i]:F7} {segmentedScan.Intensities[i]:F10}");
+                                        segmentedScan.Positions[i].ToString("0.0000000",
+                                            CultureInfo.InvariantCulture)
+                                        + " "
+                                        + segmentedScan.Intensities[i].ToString("0.0000000000",
+                                            CultureInfo.InvariantCulture));
                                 }
                             }
 
                             Writer.WriteLine("END IONS");
-                        }
+
+                            Log.Debug("Spectrum written to file -- SCAN " + scanNumber);
+
+                            break;
                     }
+                }
+
+                if (!ParseInput.Verbose)
+                {
+                    Console.WriteLine();
                 }
             }
         }

@@ -34,6 +34,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AWS.Logger.Core, Version=1.2.0.0, Culture=neutral, PublicKeyToken=71c852f8be1c371d">
+      <HintPath>..\packages\AWS.Logger.Core.1.2.0\lib\net45\AWS.Logger.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AWSSDK.CloudWatchLogs, Version=3.3.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604">
+      <HintPath>..\packages\AWSSDK.CloudWatchLogs.3.3.4\lib\net45\AWSSDK.CloudWatchLogs.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AWSSDK.Core, Version=3.3.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604">
+      <HintPath>..\packages\AWSSDK.Core.3.3.17\lib\net45\AWSSDK.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Chemistry, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\mzLib.1.0.329\lib\net471\Chemistry.dll</HintPath>
       <Private>True</Private>
@@ -48,6 +60,10 @@
     </Reference>
     <Reference Include="FlashLFQ, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\mzLib.1.0.329\lib\net471\FlashLFQ.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ManagedThermoHelperLayer, Version=1.0.329.0, Culture=neutral, PublicKeyToken=null">
@@ -108,20 +124,12 @@
       <HintPath>..\packages\mzLib.1.0.329\lib\net471\Thermo.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ThermoFisher.CommonCore.BackgroundSubtraction, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953">
-      <HintPath>..\packages\ThermoFisher.CommonCore.RawFileReader.4.0.26\lib\ThermoFisher.CommonCore.BackgroundSubtraction.dll</HintPath>
+    <Reference Include="ThermoFisher.CommonCore.Data, Version=5.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953">
+      <HintPath>..\packages\ThermoFisher.CommonCore.Data.5.0.0.6\lib\net471\ThermoFisher.CommonCore.Data.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ThermoFisher.CommonCore.Data, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953">
-      <HintPath>..\packages\ThermoFisher.CommonCore.RawFileReader.4.0.26\lib\ThermoFisher.CommonCore.Data.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.MassPrecisionEstimator, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\ThermoFisher.CommonCore.RawFileReader.4.0.26\lib\ThermoFisher.CommonCore.MassPrecisionEstimator.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.RawFileReader, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953">
-      <HintPath>..\packages\ThermoFisher.CommonCore.RawFileReader.4.0.26\lib\ThermoFisher.CommonCore.RawFileReader.dll</HintPath>
+    <Reference Include="ThermoFisher.CommonCore.RawFileReader, Version=5.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953">
+      <HintPath>..\packages\ThermoFisher.CommonCore.RawFileReader.5.0.0.6\lib\net471\ThermoFisher.CommonCore.RawFileReader.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="UsefulProteomicsDatabases, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
@@ -134,7 +142,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Tests.cs" />
+    <Compile Include="UtilTests.cs" />
+    <Compile Include="WriterTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -150,6 +159,14 @@
     <None Include="small.RAW">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\AWSSDK.CloudWatchLogs.3.3.4\analyzers\dotnet\cs\AWSSDK.CloudWatchLogs.CodeAnalysis.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="log4net.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

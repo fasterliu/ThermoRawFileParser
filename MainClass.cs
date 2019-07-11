@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using log4net;
+using log4net.Core;
 using Mono.Options;
 using ThermoFisher.CommonCore.Data;
 
@@ -6,27 +9,36 @@ namespace ThermoRawFileParser
 {
     public static class MainClass
     {
-        private static readonly log4net.ILog Log =
-            log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog Log =
+            LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        public const string Version = "1.1.9";
 
         public static void Main(string[] args)
         {
             string rawFilePath = null;
             string outputDirectory = null;
+            string outputFile = null;
             string outputFormatString = null;
-            var outputFormat = OutputFormat.NON;
+            var outputFormat = OutputFormat.NONE;
             var gzip = false;
             string outputMetadataString = null;
-            var outputMetadataFormat = MetadataFormat.NON;
-            var includeProfileData = false;
-            string collection = null;
-            string msRun = null;
-            string subFolder = null;
+            var outputMetadataFormat = MetadataFormat.NONE;
+            string s3url = null;
+            string s3AccessKeyId = null;
+            string s3SecretAccessKey = null;
+            var verbose = false;
+            string bucketName = null;
+            var ignoreInstrumentErrors = false;
+            var noPeakPicking = false;
+            var noZlibCompression = false;
+            var help = false;
+            var version = false;
+
             string ms1SpectrumModeString = null;
             var ms1SpectrumMode = SpectrumMode.CENTROID;
             string msnSpectrumModeString = null;
             var msnSpectrumMode = SpectrumMode.CENTROID;
-            var help = false;
 
             var optionSet = new OptionSet
             {
@@ -35,15 +47,24 @@ namespace ThermoRawFileParser
                     h => help = h != null
                 },
                 {
+                    "version", "Prints out the library version.",
+                    v => version = v != null
+                },
+                {
                     "i=|input=", "The raw file input.",
                     v => rawFilePath = v
                 },
                 {
-                    "o=|output=", "The output directory.",
+                    "o=|output=", "The output directory. Specify this or an output file.",
                     v => outputDirectory = v
                 },
                 {
-                    "f=|format=", "The output format for the spectra (0 for MGF, 1 for MzMl, 2 for Parquet)",
+                    "b=|output_file", "The output file. Specify this or an output directory.",
+                    v => outputFile = v
+                },
+                {
+                    "f=|format=",
+                    "The output format for the spectra (0 for MGF, 1 for mzMl, 2 for indexed mzML, 3 for Parquet).",
                     v => outputFormatString = v
                 },
                 {
@@ -55,37 +76,56 @@ namespace ThermoRawFileParser
                     v => gzip = v != null
                 },
                 {
-                    "p|profiledata",
-                    "Exclude MS2 profile data if this flag is specified (without value). Only for MGF format!",
-                    v => includeProfileData = v != null
+                    "p|noPeakPicking",
+                    "Don't use the peak picking provided by the native thermo library (by default peak picking is enabled).",
+                    v => noPeakPicking = v != null
+                },
+                {
+                    "z|noZlibCompression",
+                    "Don't use zlib compression for the m/z ratios and intensities (by default zlib compression is enabled).",
+                    v => noZlibCompression = v != null
                 },
                 {
                     "1=|ms1mode=", "The MS1 spectra peaks data mode (0 for Profile, 1 for Centroid)",
                     v => ms1SpectrumModeString = v
                 },
                 {
-                    "n=|msnmode=", "The MS/MS spectra peaks data mode (0 for Profile, 1 for Centroid)",
+                    "x=|msnmode=", "The MS/MS spectra peaks data mode (0 for Profile, 1 for Centroid)",
                     v => msnSpectrumModeString = v
                 },
                 {
-                    "c:|collection", "The optional collection identifier (PXD identifier for example).",
-                    v => collection = v
+                    "v|verbose", "Enable verbose logging.",
+                    v => verbose = v != null
                 },
                 {
-                    "r:|run:",
-                    "The optional mass spectrometry run name used in the spectrum title. The RAW file name will be used if not specified.",
-                    v => msRun = v
+                    "e|ignoreInstrumentErrors", "Ignore missing properties by the instrument.",
+                    v => ignoreInstrumentErrors = v != null
                 },
                 {
-                    "s:|subfolder:",
-                    "Optional, to disambiguate instances where the same collection has 2 or more MS runs with the same name.",
-                    v => subFolder = v
+                    "u:|s3_url:",
+                    "Optional property to write directly the data into S3 Storage.",
+                    v => s3url = v
+                },
+                {
+                    "k:|s3_accesskeyid:",
+                    "Optional key for the S3 bucket to write the file output.",
+                    v => s3AccessKeyId = v
+                },
+                {
+                    "t:|s3_secretaccesskey:",
+                    "Optional key for the S3 bucket to write the file output.",
+                    v => s3SecretAccessKey = v
+                },
+                {
+                    "n:|s3_bucketName:",
+                    "S3 bucket name",
+                    v => bucketName = v
                 }
             };
 
             try
             {
-                //parse the command line
+                // parse the command line
                 var extra = optionSet.Parse(args);
 
                 if (!extra.IsNullOrEmpty())
@@ -97,6 +137,12 @@ namespace ThermoRawFileParser
                 {
                     ShowHelp(" usage is (use -option=value for the optional arguments):", null,
                         optionSet);
+                    return;
+                }
+
+                if (version)
+                {
+                    Console.WriteLine(Version);
                     return;
                 }
 
@@ -115,18 +161,20 @@ namespace ThermoRawFileParser
                     }
                     catch (FormatException)
                     {
-                        throw new OptionException("unknown output format value (0 for MGF, 1 for MzMl, 2 for Parquet)",
+                        throw new OptionException(
+                            "unknown output format value (0 for MGF, 1 for mzMl, 2 for indexed mzML, 3 for Parquet)",
                             "-f, --format");
                     }
 
                     if (Enum.IsDefined(typeof(OutputFormat), outPutFormatInt) &&
-                        ((OutputFormat) outPutFormatInt) != OutputFormat.NON)
+                        ((OutputFormat) outPutFormatInt) != OutputFormat.NONE)
                     {
                         outputFormat = (OutputFormat) outPutFormatInt;
                     }
                     else
                     {
-                        throw new OptionException("unknown output format value (0 for MGF, 1 for MzMl, 2 for Parquet)",
+                        throw new OptionException(
+                            "unknown output format value (0 for MGF, 1 for mzMl, 2 for indexed mzML, 3 for Parquet)",
                             "-f, --format");
                     }
                 }
@@ -145,7 +193,7 @@ namespace ThermoRawFileParser
                     }
 
                     if (Enum.IsDefined(typeof(MetadataFormat), metadataInt) &&
-                        ((MetadataFormat) metadataInt) != MetadataFormat.NON)
+                        ((MetadataFormat) metadataInt) != MetadataFormat.NONE)
                     {
                         outputMetadataFormat = (MetadataFormat) metadataInt;
                     }
@@ -193,6 +241,27 @@ namespace ThermoRawFileParser
                         msnSpectrumMode = (SpectrumMode)spectrumModeInt;
                     }
                 }
+
+                if (outputFile == null && outputDirectory == null)
+                {
+                    throw new OptionException(
+                        "specify an output directory or output file",
+                        "-o, --output or -b, --output_file");
+                }
+
+                if (outputFile != null && Directory.Exists(outputFile))
+                {
+                    throw new OptionException(
+                        "specify a valid output file, not a directory",
+                        "-b, --output_file");
+                }
+
+                if (outputDirectory != null && !Directory.Exists(outputDirectory))
+                {
+                    throw new OptionException(
+                        "specify a valid output directory",
+                        "-o, --output");
+                }
             }
             catch (OptionException optionException)
             {
@@ -215,9 +284,18 @@ namespace ThermoRawFileParser
 
             try
             {
-                var parseInput = new ParseInput(rawFilePath, outputDirectory, outputFormat, gzip,
-                                                outputMetadataFormat, ms1SpectrumMode, msnSpectrumMode,
-                                                includeProfileData, collection, msRun, subFolder);
+                if (verbose)
+                {
+                    ((log4net.Repository.Hierarchy.Hierarchy) LogManager.GetRepository()).Root.Level =
+                        Level.Debug;
+                    ((log4net.Repository.Hierarchy.Hierarchy) LogManager.GetRepository())
+                        .RaiseConfigurationChanged(EventArgs.Empty);
+                }
+
+                var parseInput = new ParseInput(rawFilePath, outputDirectory, outputFile, outputFormat, gzip,
+                    outputMetadataFormat, ms1SpectrumMode, msnSpectrumMode,
+                    s3url, s3AccessKeyId, s3SecretAccessKey, bucketName, ignoreInstrumentErrors, noPeakPicking,
+                    noZlibCompression ,verbose);
                 RawFileParser.Parse(parseInput);
             }
             catch (Exception ex)
