@@ -2,12 +2,19 @@
 {
     public enum OutputFormat
     {
-        Mgf, Mzml , Parquet, NON
+        MGF,
+        MzML,
+        IndexMzML,
+        Parquet,
+        NONE
     }
 
     public enum MetadataFormat
     {
-        JSON, TXT , PARQUET, NON 
+        JSON,
+        TXT,
+        PARQUET,
+        NONE
     }
 
     public enum SpectrumMode

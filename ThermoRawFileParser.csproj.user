@@ -5,7 +5,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
     <StartAction>Project</StartAction>
-    <StartArguments>--ms1mode 1 --msnmode 1 -f 1 -o . -i R632_LysC.raw</StartArguments>
-    <StartWorkingDirectory>..\..\..\..\DropboxInc\antibodywork\workspace-R632</StartWorkingDirectory>
+    <StartArguments>--ms1mode 1 --msnmode 1 -f 1 -o . -i R946_Pepsin.raw</StartArguments>
+    <StartWorkingDirectory>..\..\..\..\DropboxInc\antibodywork\workspace-R946</StartWorkingDirectory>
   </PropertyGroup>
 </Project>

@@ -166,8 +166,8 @@ namespace ThermoRawFileParser.Writer
                 {
                     ActivationType.HigherEnergyCollisionalDissociation, new CVParamType
                     {
-                        accession = "MS:1002481",
-                        name = "higher energy beam-type collision-induced dissociation",
+                        accession = "MS:1000422",
+                        name = "beam-type collision-induced dissociation",
                         cvRef = "MS",
                         value = ""
                     }
@@ -377,7 +377,7 @@ namespace ThermoRawFileParser.Writer
                             value = ""
                         }
                     }
-                },                
+                },
                 {
                     "MS:1000483", new List<CVParamType>
                     {
