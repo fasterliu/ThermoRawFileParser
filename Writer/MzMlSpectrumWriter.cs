@@ -1414,20 +1414,7 @@ namespace ThermoRawFileParser.Writer
                         });
                 }
 
-                if (reaction != null)
-                {
-                    if (!OntologyMapping.DissociationTypes.TryGetValue(reaction.ActivationType, out var activation))
-                    {
-                        activation = new CVParamType
-                        {
-                            accession = "MS:1000044",
-                            name = "Activation Method",
-                            cvRef = "MS",
-                            value = ""
-                        };
-                    }
-                    activationCvParams.Add(activation);
-                }
+                activationCvParams.Add(activation);
             }
 
             // Check for supplemental activation
