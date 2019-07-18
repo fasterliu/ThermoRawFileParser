@@ -199,7 +199,6 @@ namespace ThermoRawFileParser.Writer
                         High = rawFile.RetentionTimeFromScanNumber(precursorScanNumber)
                     }
                 };
-                ;
 
                 IChromatogramSettings[] allSettings =
                 {

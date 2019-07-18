@@ -32,7 +32,7 @@ namespace ThermoRawFileParser.Writer
 
         private IRawDataPlus _rawFile;
 
-        // Dictionary to keep track of the different mass analyzers (key: Thermo MassAnalyzerType; value: the reference string)       
+        // Dictionary to keep track of the different mass analyzers (key: Thermo MassAnalyzerType; value: the reference string)
         private readonly Dictionary<MassAnalyzerType, string> _massAnalyzers =
             new Dictionary<MassAnalyzerType, string>();
 
@@ -652,7 +652,7 @@ namespace ThermoRawFileParser.Writer
             // Define the settings for getting the Base Peak chromatogram
             var settings = new ChromatogramTraceSettings(TraceType.BasePeak);
 
-            // Get the chromatogram from the RAW file. 
+            // Get the chromatogram from the RAW file.
             var data = _rawFile.GetChromatogramData(new IChromatogramSettings[] {settings}, firstScanNumber,
                 lastScanNumber);
 
@@ -736,7 +736,7 @@ namespace ThermoRawFileParser.Writer
                         binaryData.Add(timesBinaryData);
                     }
 
-                    // Chromatogram intensities                    
+                    // Chromatogram intensities
                     if (!trace[i].Times.IsNullOrEmpty())
                     {
                         // Set the spectrum default array length if necessary
@@ -935,7 +935,7 @@ namespace ThermoRawFileParser.Writer
                     throw new ArgumentOutOfRangeException();
             }
 
-            // Scan polarity            
+            // Scan polarity
             var polarityType = scanFilter.Polarity;
             switch (polarityType)
             {

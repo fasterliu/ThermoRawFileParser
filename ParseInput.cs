@@ -89,6 +89,8 @@ namespace ThermoRawFileParser
             NoPeakPicking = false;
             NoZlibCompression = false;
             Verbose = false;
+            Ms1SpectrumMode = SpectrumMode.CENTROID;
+            MsnSpectrumMode = SpectrumMode.CENTROID;
 
             if (S3url != null && S3AccessKeyId != null && S3SecretAccessKey != null && bucketName != null)
                 InitializeS3Bucket();
