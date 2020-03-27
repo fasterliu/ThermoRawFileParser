@@ -142,7 +142,7 @@ namespace ThermoRawFileParser
 
                 if (version)
                 {
-                    Console.WriteLine(Version);
+                    Console.WriteLine("Version " + Version + ", Built at 2020-03-26");
                     return;
                 }
 
